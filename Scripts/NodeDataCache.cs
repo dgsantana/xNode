@@ -18,7 +18,7 @@ namespace XNode {
 
             if (portDataCache.ContainsKey(nodeType)) {
                 for (int i = 0; i < portDataCache[nodeType].Count; i++) {
-                    staticPorts.Add(portDataCache[nodeType][i].fieldName, portDataCache[nodeType][i]);
+                    staticPorts.Add(portDataCache[nodeType][i].FieldName, portDataCache[nodeType][i]);
                 }
             }
 
@@ -26,19 +26,19 @@ namespace XNode {
             // Loop through current node ports
             foreach (NodePort port in ports.Values.ToList()) {
                 // If port still exists, check it it has been changed
-                if (staticPorts.ContainsKey(port.fieldName)) {
-                    NodePort staticPort = staticPorts[port.fieldName];
+                if (staticPorts.ContainsKey(port.FieldName)) {
+                    NodePort staticPort = staticPorts[port.FieldName];
                     // If port exists but with wrong settings, remove it. Re-add it later.
-                    if (port.connectionType != staticPort.connectionType || port.IsDynamic || port.direction != staticPort.direction) ports.Remove(port.fieldName);
+                    if (port.connectionType != staticPort.connectionType || port.IsDynamic || port.Direction != staticPort.Direction) ports.Remove(port.FieldName);
                     else port.ValueType = staticPort.ValueType;
                 }
                 // If port doesn't exist anymore, remove it
-                else if (port.IsStatic) ports.Remove(port.fieldName);
+                else if (port.IsStatic) ports.Remove(port.FieldName);
             }
             // Add missing ports
             foreach (NodePort staticPort in staticPorts.Values) {
-                if (!ports.ContainsKey(staticPort.fieldName)) {
-                    ports.Add(staticPort.fieldName, new NodePort(staticPort, node));
+                if (!ports.ContainsKey(staticPort.FieldName)) {
+                    ports.Add(staticPort.FieldName, new NodePort(staticPort, node));
                 }
             }
         }
