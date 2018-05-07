@@ -200,7 +200,7 @@ namespace XNodeEditor
             }
             else
             {
-                Debug.LogError(string.Format("The template file was not found: {0}", templatePath));
+                Debug.LogError($"The template file was not found: {templatePath}");
                 return null;
             }
         }

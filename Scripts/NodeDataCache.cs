@@ -1,111 +1,123 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace XNode {
+namespace XNode
+{
     /// <summary> Precaches reflection data in editor so we won't have to do it runtime </summary>
-    public static class NodeDataCache {
-        private static PortDataCache portDataCache;
-        private static bool Initialized { get { return portDataCache != null; } }
+    public static class NodeDataCache
+    {
+        private static PortDataCache _portDataCache;
+        private static bool Initialized => _portDataCache != null;
 
         /// <summary> Update static ports to reflect class fields. </summary>
-        public static void UpdatePorts(Node node, Dictionary<string, NodePort> ports) {
+        public static void UpdatePorts(Node node, Dictionary<string, NodePort> ports)
+        {
             if (!Initialized) BuildCache();
 
-            Dictionary<string, NodePort> staticPorts = new Dictionary<string, NodePort>();
-            System.Type nodeType = node.GetType();
+            var staticPorts = new Dictionary<string, NodePort>();
+            var nodeType = node.GetType();
 
-            if (portDataCache.ContainsKey(nodeType)) {
-                for (int i = 0; i < portDataCache[nodeType].Count; i++) {
-                    staticPorts.Add(portDataCache[nodeType][i].FieldName, portDataCache[nodeType][i]);
-                }
-            }
+            if (_portDataCache.ContainsKey(nodeType))
+                for (var i = 0; i < _portDataCache[nodeType].Count; i++)
+                    staticPorts.Add(_portDataCache[nodeType][i].FieldName, _portDataCache[nodeType][i]);
 
             // Cleanup port dict - Remove nonexisting static ports - update static port types
             // Loop through current node ports
-            foreach (NodePort port in ports.Values.ToList()) {
+            foreach (var port in ports.Values.ToList())
                 // If port still exists, check it it has been changed
-                if (staticPorts.ContainsKey(port.FieldName)) {
-                    NodePort staticPort = staticPorts[port.FieldName];
+                if (staticPorts.ContainsKey(port.FieldName))
+                {
+                    var staticPort = staticPorts[port.FieldName];
                     // If port exists but with wrong settings, remove it. Re-add it later.
-                    if (port.connectionType != staticPort.connectionType || port.IsDynamic || port.Direction != staticPort.Direction) ports.Remove(port.FieldName);
+                    if (port.connectionType != staticPort.connectionType || port.IsDynamic ||
+                        port.Direction != staticPort.Direction) ports.Remove(port.FieldName);
                     else port.ValueType = staticPort.ValueType;
                 }
                 // If port doesn't exist anymore, remove it
-                else if (port.IsStatic) ports.Remove(port.FieldName);
-            }
+                else if (port.IsStatic)
+                {
+                    ports.Remove(port.FieldName);
+                }
+
             // Add missing ports
-            foreach (NodePort staticPort in staticPorts.Values) {
-                if (!ports.ContainsKey(staticPort.FieldName)) {
+            foreach (var staticPort in staticPorts.Values)
+                if (!ports.ContainsKey(staticPort.FieldName))
                     ports.Add(staticPort.FieldName, new NodePort(staticPort, node));
-                }
-            }
         }
 
-        private static void BuildCache() {
-            portDataCache = new PortDataCache();
-            System.Type baseType = typeof(Node);
-            List<System.Type> nodeTypes = new List<System.Type>();
-            System.Reflection.Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-            Assembly selfAssembly = Assembly.GetAssembly(baseType);
-            if (selfAssembly.FullName.StartsWith("Assembly-CSharp")) {
-                // If xNode is not used as a DLL, check only CSharp (fast)
+        private static void BuildCache()
+        {
+            _portDataCache = new PortDataCache();
+            var baseType = typeof(Node);
+            var nodeTypes = new List<Type>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var selfAssembly = Assembly.GetAssembly(baseType);
+            if (selfAssembly.FullName.StartsWith("Assembly-CSharp"))
                 nodeTypes.AddRange(selfAssembly.GetTypes().Where(t => !t.IsAbstract && baseType.IsAssignableFrom(t)));
-            } else {
-                // Else, check all DDLs (slow)
-                foreach (Assembly assembly in assemblies) {
-                    nodeTypes.AddRange(assembly.GetTypes().Where(t => !t.IsAbstract && baseType.IsAssignableFrom(t)).ToArray());
-                }
-            }
-            for (int i = 0; i < nodeTypes.Count; i++) {
-                CachePorts(nodeTypes[i]);
-            }
+            else
+                foreach (var assembly in assemblies)
+                    nodeTypes.AddRange(assembly.GetTypes().Where(t => !t.IsAbstract && baseType.IsAssignableFrom(t))
+                        .ToArray());
+            for (var i = 0; i < nodeTypes.Count; i++) CachePorts(nodeTypes[i]);
         }
 
-        private static void CachePorts(System.Type nodeType) {
-            System.Reflection.FieldInfo[] fieldInfo = nodeType.GetFields();
-            for (int i = 0; i < fieldInfo.Length; i++) {
-
+        private static void CachePorts(Type nodeType)
+        {
+            var fieldInfo = nodeType.GetFields();
+            for (var i = 0; i < fieldInfo.Length; i++)
+            {
                 //Get InputAttribute and OutputAttribute
-                object[] attribs = fieldInfo[i].GetCustomAttributes(false);
-                Node.InputAttribute inputAttrib = attribs.FirstOrDefault(x => x is Node.InputAttribute) as Node.InputAttribute;
-                Node.OutputAttribute outputAttrib = attribs.FirstOrDefault(x => x is Node.OutputAttribute) as Node.OutputAttribute;
+                var attribs = fieldInfo[i].GetCustomAttributes(false);
+                var inputAttrib = attribs.FirstOrDefault(x => x is Node.InputAttribute) as Node.InputAttribute;
+                var outputAttrib = attribs.FirstOrDefault(x => x is Node.OutputAttribute) as Node.OutputAttribute;
 
                 if (inputAttrib == null && outputAttrib == null) continue;
 
-                if (inputAttrib != null && outputAttrib != null) Debug.LogError("Field " + fieldInfo[i].Name + " of type " + nodeType.FullName + " cannot be both input and output.");
-                else {
-                    if (!portDataCache.ContainsKey(nodeType)) portDataCache.Add(nodeType, new List<NodePort>());
-                    portDataCache[nodeType].Add(new NodePort(fieldInfo[i]));
+                if (inputAttrib != null && outputAttrib != null)
+                {
+                    Debug.LogError("Field " + fieldInfo[i].Name + " of type " + nodeType.FullName +
+                                   " cannot be both input and output.");
+                }
+                else
+                {
+                    if (!_portDataCache.ContainsKey(nodeType)) _portDataCache.Add(nodeType, new List<NodePort>());
+                    _portDataCache[nodeType].Add(new NodePort(fieldInfo[i]));
                 }
             }
         }
 
-        [System.Serializable]
-        private class PortDataCache : Dictionary<System.Type, List<NodePort>>, ISerializationCallbackReceiver {
-            [SerializeField] private List<System.Type> keys = new List<System.Type>();
-            [SerializeField] private List<List<NodePort>> values = new List<List<NodePort>>();
+        [Serializable]
+        private class PortDataCache : Dictionary<Type, List<NodePort>>, ISerializationCallbackReceiver
+        {
+            [SerializeField] private readonly List<Type> keys = new List<Type>();
+            [SerializeField] private readonly List<List<NodePort>> values = new List<List<NodePort>>();
 
             // save the dictionary to lists
-            public void OnBeforeSerialize() {
+            public void OnBeforeSerialize()
+            {
                 keys.Clear();
                 values.Clear();
-                foreach (var pair in this) {
+                foreach (var pair in this)
+                {
                     keys.Add(pair.Key);
                     values.Add(pair.Value);
                 }
             }
 
             // load dictionary from lists
-            public void OnAfterDeserialize() {
-                this.Clear();
+            public void OnAfterDeserialize()
+            {
+                Clear();
 
                 if (keys.Count != values.Count)
-                    throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable."));
+                    throw new Exception(string.Format(
+                        "there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable."));
 
-                for (int i = 0; i < keys.Count; i++)
-                    this.Add(keys[i], values[i]);
+                for (var i = 0; i < keys.Count; i++)
+                    Add(keys[i], values[i]);
             }
         }
     }

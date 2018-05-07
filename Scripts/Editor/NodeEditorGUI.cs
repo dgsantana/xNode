@@ -12,7 +12,7 @@ namespace XNodeEditor
         public NodeGraphEditor GraphEditor;
         private List<UnityEngine.Object> _selectionCache;
 
-        private void OnGUI()
+        protected virtual void OnGUI()
         {
             var e = Event.current;
             var m = GUI.matrix;
@@ -289,11 +289,11 @@ namespace XNodeEditor
                             if (_selectedReroutes.Contains(rerouteRef))
                             {
                                 GUI.color = NodeEditorPreferences.GetSettings().HighlightColor;
-                                GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
+                                GUI.DrawTexture(rect, NodeEditorResources.DotOuter);
                             }
 
                             GUI.color = connectionColor;
-                            GUI.DrawTexture(rect, NodeEditorResources.dot);
+                            GUI.DrawTexture(rect, NodeEditorResources.Dot);
                             if (rect.Overlaps(_selectionBox)) selection.Add(rerouteRef);
                             if (rect.Contains(mousePos)) _hoveredReroute = rerouteRef;
 
@@ -367,8 +367,8 @@ namespace XNodeEditor
 
                 if (selected)
                 {
-                    var style = new GUIStyle(NodeEditorResources.styles.nodeBody);
-                    var highlightStyle = new GUIStyle(NodeEditorResources.styles.nodeHighlight);
+                    var style = new GUIStyle(NodeEditorResources.Styles.NodeBody);
+                    var highlightStyle = new GUIStyle(NodeEditorResources.Styles.NodeHighlight);
                     highlightStyle.padding = style.padding;
                     style.padding = new RectOffset();
                     GUI.color = nodeEditor.GetTint();
@@ -378,7 +378,7 @@ namespace XNodeEditor
                 }
                 else
                 {
-                    var style = NodeEditorResources.styles.nodeBody;
+                    var style = NodeEditorResources.Styles.NodeBody;
                     GUI.color = nodeEditor.GetTint();
                     GUILayout.BeginVertical(new GUIStyle(style));
                 }
@@ -395,7 +395,7 @@ namespace XNodeEditor
                 //If user changed a value, notify other scripts through onUpdateNode
                 if (EditorGUI.EndChangeCheck())
                 {
-                    if (NodeEditor.onUpdateNode != null) NodeEditor.onUpdateNode(node);
+                    NodeEditor.onUpdateNode?.Invoke(node);
                 }
 
                 if (e.type == EventType.Repaint)
@@ -473,9 +473,9 @@ namespace XNodeEditor
                     var obj = _hoveredPort.Node.GetValue(_hoveredPort);
                     content.text += " = " + (obj != null ? obj.ToString() : "null");
                 }
-                var size = NodeEditorResources.styles.tooltip.CalcSize(content);
+                var size = NodeEditorResources.Styles.Tooltip.CalcSize(content);
                 var rect = new Rect(Event.current.mousePosition - (size), size);
-                EditorGUI.LabelField(rect, content, NodeEditorResources.styles.tooltip);
+                EditorGUI.LabelField(rect, content, NodeEditorResources.Styles.Tooltip);
                 Repaint();
             }
         }

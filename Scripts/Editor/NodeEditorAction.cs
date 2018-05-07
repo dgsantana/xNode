@@ -378,7 +378,7 @@ namespace XNodeEditor
         {
             XNode.Node node = graph.AddNode(type);
             node.Position = position;
-            node.name = UnityEditor.ObjectNames.NicifyVariableName(type.ToString());
+            node.name = ObjectNames.NicifyVariableName(type.Name); //UnityEditor.ObjectNames.NicifyVariableName(type.ToString());
             AssetDatabase.AddObjectToAsset(node, graph);
             if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             Repaint();

@@ -112,18 +112,23 @@ namespace XNode
         {
             if (fieldName == null)
             {
-                fieldName = "instanceInput_0";
-                int i = 0;
-                while (HasPort(fieldName)) fieldName = "instanceInput_" + (++i);
+                int i = 1;
+                fieldName = $"instance{(direction == NodePort.IO.Input ? "Input" : "Output")}{i}";
+                while (HasPort(fieldName)) fieldName = $"instance{(direction == NodePort.IO.Input ? "Input" : "Output")}{++i}";
             }
             else if (HasPort(fieldName))
             {
                 Debug.LogWarning("Port '" + fieldName + "' already exists in " + name, this);
                 return _ports[fieldName];
             }
-            NodePort port = new NodePort(fieldName, type, direction, connectionType, this);
+            var port = new NodePort(fieldName, type, direction, connectionType, this);
             _ports.Add(fieldName, port);
             return port;
+        }
+
+        protected void AddStoredDynamicOutput(NodePort port)
+        {
+            _ports[port.FieldName] = port;
         }
 
         /// <summary> Remove an instance port from the node </summary>
@@ -135,7 +140,7 @@ namespace XNode
         /// <summary> Remove an instance port from the node </summary>
         public void RemoveInstancePort(NodePort port)
         {
-            if (port == null) throw new ArgumentNullException("port");
+            if (port == null) throw new ArgumentNullException(nameof(port));
             else if (port.IsStatic) throw new ArgumentException("cannot remove static port");
             port.ClearConnections();
             _ports.Remove(port.FieldName);
@@ -218,7 +223,7 @@ namespace XNode
         public virtual void OnCreateConnection(NodePort from, NodePort to) { }
 
         /// <summary> Called after a connection is removed from this port </summary>
-        /// <param name="from">Output</param> <param name="to">Input</param>
+        /// <param name="port">Removed port</param>
         public virtual void OnRemoveConnection(NodePort port) { }
 
         /// <summary> Disconnect everything from this node </summary>

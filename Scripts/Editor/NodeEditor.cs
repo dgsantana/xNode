@@ -38,7 +38,7 @@ namespace XNodeEditor
                     EditorGUIUtility.editingTextField = true;
                     renaming = 2;
                 }
-                target.name = EditorGUILayout.TextField(target.name, NodeEditorResources.styles.nodeHeader, GUILayout.Height(30));
+                target.name = EditorGUILayout.TextField(target.name, NodeEditorResources.Styles.NodeHeader, GUILayout.Height(30));
                 if (!EditorGUIUtility.editingTextField)
                 {
                     Rename(target.name);
@@ -47,7 +47,7 @@ namespace XNodeEditor
             }
             else
             {
-                GUILayout.Label(title, NodeEditorResources.styles.nodeHeader, GUILayout.Height(30));
+                GUILayout.Label(title, NodeEditorResources.Styles.NodeHeader, GUILayout.Height(30));
             }
         }
 
@@ -85,10 +85,15 @@ namespace XNodeEditor
             renaming = 1;
         }
 
+        protected virtual void OnRenameComplete(string newName)
+        {
+        }
+
         public void Rename(string newName)
         {
             target.name = newName;
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(target));
+            OnRenameComplete(newName);
         }
 
         [AttributeUsage(AttributeTargets.Class)]

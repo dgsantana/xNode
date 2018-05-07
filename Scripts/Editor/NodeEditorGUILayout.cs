@@ -146,9 +146,9 @@ namespace XNodeEditor
         {
             var col = GUI.color;
             GUI.color = backgroundColor;
-            GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
+            GUI.DrawTexture(rect, NodeEditorResources.DotOuter);
             GUI.color = typeColor;
-            GUI.DrawTexture(rect, NodeEditorResources.dot);
+            GUI.DrawTexture(rect, NodeEditorResources.Dot);
             GUI.color = col;
         }
     }
